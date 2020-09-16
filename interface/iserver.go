@@ -1,4 +1,4 @@
-package serverinterface
+package mintinterfaces
 
 // ServerInterface is the interface of the server
 type ServerInterface interface {

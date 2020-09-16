@@ -1,0 +1,9 @@
+syntax="proto3"; //版本号
+package mintcommon;  //包名
+
+message AppUser{ //消息，对应于Go的结构体
+  uint32 ID=1;
+  string Account=2;
+  string Password=3;
+  string Name=4;
+}

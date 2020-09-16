@@ -3,9 +3,9 @@ package server
 import (
 	"fmt"
 	mintcommon "mintserver/common"
-	serverinterface "mintserver/interface"
+	"mintserver/handler"
+	mintinterfaces "mintserver/interface"
 	"net"
-	"time"
 )
 
 // MintServer implements a server module
@@ -25,14 +25,14 @@ type MintServer struct {
 // Init the server
 func (s *MintServer) Init() {
 	mintcommon.DebugPrint(s.enableLog, s.logToConsole, s.logPath,
-		fmt.Sprintf("Initiate server %s on %s:%d", s.Name, s.BindAddress, s.Port))
+		fmt.Sprintf("[info] initiate server %s on %s:%d", s.Name, s.BindAddress, s.Port))
 	go func() {
 		/* 1. Bind TCP ip:port */
 		addr, err := net.ResolveTCPAddr(s.IPVersion, fmt.Sprintf("%s:%d", s.BindAddress, s.Port))
 		if err != nil {
 			if s.enableLog && s.logToConsole {
 				mintcommon.DebugPrint(s.enableLog, s.logToConsole, s.logPath,
-					fmt.Sprintf("ResolveTCPAddr failed: %s", err))
+					fmt.Sprintf("[error] resolveTCPAddr failed: %s", err))
 			}
 			return
 		}
@@ -42,14 +42,16 @@ func (s *MintServer) Init() {
 		if err != nil {
 			if s.enableLog && s.logToConsole {
 				mintcommon.DebugPrint(s.enableLog, s.logToConsole, s.logPath,
-					fmt.Sprintf("ListenTCP failed: %s", err))
+					fmt.Sprintf("[error] listenTCP failed: %s", err))
 			}
 		}
 
 		if s.enableLog && s.logToConsole {
 			mintcommon.DebugPrint(s.enableLog, s.logToConsole, s.logPath,
-				fmt.Sprintf("Start mint %s (%s) server succeeded. Listening...", s.Name, s.IPVersion))
+				fmt.Sprintf("[info] start mint %s (%s) server succeeded. Listening...", s.Name, s.IPVersion))
 		}
+
+		var connID uint32 = 1
 
 		/* 3. Wait for connections and process requests */
 		for {
@@ -57,43 +59,14 @@ func (s *MintServer) Init() {
 			if err != nil {
 				if s.enableLog && s.logToConsole {
 					mintcommon.DebugPrint(s.enableLog, s.logToConsole, s.logPath,
-						fmt.Sprintf("Accept connection failed: %s", err))
+						fmt.Sprintf("[error] AcceptTCP connection failed: %s", err))
 				}
 				continue
 			}
 
-			/* Simple function, return welcome */
-			go func() {
-				retry := false
-				retryTimes := 0
-				buf := make([]byte, s.bufSize)
-				for {
-					/* retry 10 times with 1 second each time */
-					if retryTimes == 10 {
-						mintcommon.DebugPrint(s.enableLog, s.logToConsole, s.logPath,
-							fmt.Sprintf("Close a connection due to timeout"))
-						break
-					}
-					if retry {
-						retryTimes++
-					}
-					if _, err := conn.Read(buf); err != nil {
-						retry = true
-						time.Sleep(time.Second * 1)
-						continue
-					}
-
-					/* Respond to client */
-					if _, err := conn.Write([]byte("Welcome!")); err != nil {
-						if s.enableLog && s.logToConsole {
-							mintcommon.DebugPrint(s.enableLog, s.logToConsole, s.logPath,
-								fmt.Sprintf("Write buffer failed: %s", err))
-						}
-						retry = false
-						continue
-					}
-				}
-			}()
+			connHandler := NewConnector(conn, connID, handler.MainHandler)
+			connID++
+			go connHandler.Start()
 		}
 	}()
 }
@@ -110,7 +83,7 @@ func (s *MintServer) Run() {
 }
 
 // NewMintServerDefault returns a new server interface
-func NewMintServerDefault(_name string) serverinterface.ServerInterface {
+func NewMintServerDefault(_name string) mintinterfaces.ServerInterface {
 	if _name == "" {
 		_name = "MintDefault"
 	}
