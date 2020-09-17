@@ -1,0 +1,8 @@
+syntax="proto3"; // Version
+import "user.proto";
+package handler;  // Package Name
+
+message ClientRequest{
+    string Fuction=1;
+    AppUser Au=2;
+}

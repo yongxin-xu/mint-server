@@ -37,7 +37,7 @@ func (c *Connector) Start() {
 			buf := make([]byte, 1024)
 			cnt, err := c.Conn.Read(buf)
 			if err != nil {
-				continue
+				break
 			}
 			/* call handler */
 			if err := c.funcHanlder(c.Conn, buf, cnt); err != nil {
