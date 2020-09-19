@@ -20,11 +20,11 @@ func SignIn(_account string, _psw string) (bool, error) {
 // 1. Check if (Account, Name, Password) are valid
 // 2. Check if Account duplicated in database
 // 3. Register the user, and fetch user id
-// 4. Return ID and Result (if error, ID = -1)
+// 4. Return Result
 // TODO: use database to check
-func SignUp(_account string, _name string, _psw string) (int, error) {
+func SignUp(_account string, _name string, _psw string) (bool, error) {
 	if _account == "yx123" && _name == "yongxin" && _psw == "yongxin123" {
-		return 1, nil
+		return true, nil
 	}
-	return 0, nil
+	return false, nil
 }

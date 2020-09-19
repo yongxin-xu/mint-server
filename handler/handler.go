@@ -8,6 +8,18 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+type functionType string
+
+const (
+	SIGNIN functionType = "SignIn"
+	SIGNUP functionType = "SignUp"
+)
+
+const (
+	SUCCESS = 0
+	ERROR = 1
+)
+
 // MainHanlder handles functions
 // For example, Login function is received, call LoginCheck
 // or Register function is received, call Register
@@ -19,49 +31,76 @@ func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 		return err
 	}
 	au := cr.GetAu()
-	switch cr.GetFuction() {
-	case "SignIn":
+	fn := cr.GetFuction()
+	switch functionType(fn) {
+	case SIGNIN:
 		result, err := SignIn(au.Account, au.Password)
-		if err != nil {
+		err2 := serverResponse(conn, au, SIGNIN, result);
+		if err != nil || err2 != nil {
 			return err
 		}
-		if result {
-			mintcommon.DebugPrint(true, true, "",
-				fmt.Sprintf("[info] sign in succeeded, account: %s", au.Account))
-			if _, err := conn.Write([]byte("sign in success, welcome yongxin!")); err != nil {
-				return err
-			}
-		} else {
-			mintcommon.DebugPrint(true, true, "",
-				fmt.Sprintf("[info] signin failed, account: %s", au.Account))
-			if _, err := conn.Write([]byte("signin failed, try again!")); err != nil {
-				return err
-			}
-		}
-	case "SignUp":
+	case SIGNUP:
 		result, err := SignUp(au.Account, au.Name, au.Password)
-		if err != nil {
+		err2 := serverResponse(conn, au, SIGNUP, result);
+		if err != nil || err2 != nil {
 			return err
-		}
-		if result != -1 {
-			mintcommon.DebugPrint(true, true, "",
-				fmt.Sprintf("[info] sign up succeeded, account: %s", au.Account))
-			if _, err := conn.Write([]byte("Sign up success, welcome yongxin!")); err != nil {
-				return err
-			}
-		} else {
-			mintcommon.DebugPrint(true, true, "",
-				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			if _, err := conn.Write([]byte("Sign up failed, try again!")); err != nil {
-				return err
-			}
 		}
 	default:
-		if _, err := conn.Write([]byte("Unknown Function!")); err != nil {
+		if err := serverResponse(conn, au, functionType(fn), false); err != nil {
 			return err
 		}
 	}
+	return nil
+}
 
+// serverResponse send messages back to clients
+// The message includes
+// 1. Whether the operation failed or not
+// 2. Some additional information
+func serverResponse(conn *net.TCPConn, au *AppUser, ft functionType, result bool) error {
+	switch ft {
+	case SIGNIN:
+		if result {
+			mintcommon.DebugPrint(true, true, "",
+				fmt.Sprintf("[info] sign in succeeded, account: %s", au.Account))
+			return writeResponse(conn, au, SUCCESS,
+				fmt.Sprintf("Sign in success, welcome %s!", au.Name))
+		} else {
+			mintcommon.DebugPrint(true, true, "",
+				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
+			return writeResponse(conn, au, ERROR,
+				fmt.Sprintf("Sign in failed, try again!"))
+		}
+	case SIGNUP:
+		if result {
+			mintcommon.DebugPrint(true, true, "",
+				fmt.Sprintf("[info] sign up succeeded, account: %s", au.Account))
+			return writeResponse(conn, au, SUCCESS,
+				fmt.Sprintf("Sign up success, welcome %s!", au.Name))
+		} else {
+			mintcommon.DebugPrint(true, true, "",
+				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
+			return writeResponse(conn, au, ERROR,
+				fmt.Sprintf("Sign up failed, try again!"))
+		}
+	default:
+		mintcommon.DebugPrint(true, true, "",
+			"[info] Unknown function in ServerResponse")
+		return writeResponse(conn, au, ERROR, "Unknown function, contact developer!")
+	}
+}
+
+// writeResponse is the internal implementation of serverResponse
+// it sends the proto message to client use net.TCPConn.Write
+func writeResponse(conn *net.TCPConn, au *AppUser, isError uint32, info string) error {
+	srvrsp := &SrvResponse{Error: isError, Info: info, Au: au}
+	data, err := proto.Marshal(srvrsp)
+	if err != nil {
+		return err
+	}
+	if _, err := conn.Write(data); err != nil {
+		return err
+	}
 	return nil
 }
 
