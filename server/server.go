@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	mintcommon "mintserver/common"
+	"mintserver/config"
 	"mintserver/handler"
 	mintinterfaces "mintserver/interface"
 	"net"
@@ -84,13 +85,13 @@ func (s *MintServer) Run() {
 
 // NewMintServerDefault returns a new server interface
 func NewMintServerDefault(_name string) mintinterfaces.ServerInterface {
-	if _name == "" {
-		_name = "MintDefault"
-	}
-	s := &MintServer{Name: _name, IPVersion: "tcp4", BindAddress: "127.0.0.1", Port: 30000}
-	s.bufSize = 1024
-	s.enableLog = true
-	s.logToConsole = true
-	s.logPath = ""
+	s := &MintServer{Name: config.GlobalConfiguration.ServerName,
+		IPVersion:   "tcp4",
+		BindAddress: config.GlobalConfiguration.ServerHost,
+		Port:        config.GlobalConfiguration.ServerPort}
+	s.bufSize = config.GlobalConfiguration.MaxPackageSize
+	s.enableLog = config.GlobalConfiguration.EnableLog
+	s.logToConsole = config.GlobalConfiguration.LogToConsole
+	s.logPath = config.GlobalConfiguration.LogPath
 	return s
 }

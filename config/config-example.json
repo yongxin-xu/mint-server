@@ -1,0 +1,15 @@
+{
+  "ServerName": "Mint Server",
+  "ServerHost": "127.0.0.1",
+  "ServerPort": 30000,
+  "MaxPackageSize": 2048,
+  "EnableLog": true,
+  "LogToConsole": true,
+  "LogPath": "",
+  "DBType": "MySQL",
+  "DBHost": "127.0.0.1",
+  "DBPort": "20000",
+  "DBUser": "u1",
+  "DBPassword": "123456",
+  "DBSchemaName": "minigame"
+}
