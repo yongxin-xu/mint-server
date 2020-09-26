@@ -65,7 +65,7 @@ func (s *MintServer) Init() {
 				continue
 			}
 
-			connHandler := NewConnector(conn, connID, handler.MainHandler)
+			connHandler := NewConnector(conn, connID, protocol.MainHandler)
 			connID++
 			go connHandler.Start()
 		}

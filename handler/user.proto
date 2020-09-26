@@ -1,9 +1,0 @@
-syntax="proto3"; // Version
-package handler;  // Package Name
-
-message AppUser{
-  uint32 ID=1;
-  string Account=2;
-  string Password=3;
-  string Name=4;
-}

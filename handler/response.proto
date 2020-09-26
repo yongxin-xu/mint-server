@@ -1,9 +1,0 @@
-syntax="proto3"; // Version
-import "user.proto";
-package handler;  // Package Name
-
-message SrvResponse{
-  uint32 Error=1; // Successful if Error = 0, otherwise failed
-  string Info=2;  // Send Information to Clients
-  AppUser Au=3;   // AppUser information, client can get (name, id)
-}

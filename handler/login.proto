@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package protocol;
+
+// Handshake with the server
+message Handshake{
+	string token = 1;
+}
+
+// store basic information of players
+message PlayerInfo{
+	uint32 id = 1;
+	string account = 2; 	// 0 < length < 25, only Alphanumeric  
+	string password = 3;	// 0 < length < 25, only Alphanumeric  
+	string name = 4;		// 0 < length < 25, only Alphanumeric  
+}
+
+// request login
+message ReqLogin{
+	string account = 1;
+	string password = 2;
+}
+
+// request register
+message ReqRegister{
+	PlayerInfo playerInfo = 1;
+}
+
+enum ServerReturnCode {
+	OK               = 0;
+	DBFAIL           = 1;
+	ACC_PSW_NO_MATCH = 2;
+	ACC_INVALID      = 3;
+	PSW_INVALID      = 4;
+	NAME_INVALID	 = 5;
+	ACC_EXISTED      = 6;
+	UNKNOWN_FUNC	 = 99;
+} 
+
+// server response after login
+message RetLogin{
+	ServerReturnCode code = 1;
+	uint32 id = 2;
+	string name = 3;	// server returns (name, id) pair for further contacts
+}
+
+// server response registration
+message RetRegister{
+	ServerReturnCode code = 1;
+	uint32 id = 2;		// server returns (id) for further contacts
+}
