@@ -58,23 +58,23 @@ func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 	au := &PlayerInfo{}
 	switch fn {
 	case SIGNIN:
-		if err := proto.Unmarshal(data[4:cnt], rl); err != nil {
+		if err := proto.Unmarshal(data[5:cnt], rl); err != nil {
 			return err
 		}
 		au.Account = rl.GetAccount()
 		au.Password = rl.GetPassword()
-		fmt.Println(au.Account, au.Password)
+		fmt.Println(rl)
 		result := signIn(au)
 		err2 := serverResponse(conn, au, SIGNIN, result);
 		if err2 != nil {
 			return err2
 		}
 	case SIGNUP:
-		if err := proto.Unmarshal(data[4:cnt], rr); err != nil {
+		if err := proto.Unmarshal(data[5:cnt], rr); err != nil {
 			return err
 		}
 		au = rr.GetPlayerInfo()
-		fmt.Println(au.Account, au.Password)
+		fmt.Println(rr)
 		result := signUp(au)
 		err2 := serverResponse(conn, au, SIGNUP, result);
 		if err2 != nil {
