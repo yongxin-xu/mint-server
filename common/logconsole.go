@@ -3,6 +3,7 @@ package mintcommon
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 // Mutex locks print functions
@@ -22,8 +23,15 @@ func DebugPrint(doLog bool, toConsole bool, path string, a string) {
 
 // logToConsole logs server's information to console
 func logToConsole(a string) {
+	current_time := time.Now()
+	year := current_time.Year()
+	month := current_time.Month()
+	day := current_time.Day()
+	hour := current_time.Hour()
+	minute := current_time.Minute()
+	second := current_time.Second()
 	Mutex.Lock()
-	fmt.Println(a)
+	fmt.Printf("%d-%s-%d %d:%d:%d    %s\n", year, month, day, hour, minute, second, a)
 	Mutex.Unlock()
 }
 
