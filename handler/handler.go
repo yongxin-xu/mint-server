@@ -30,8 +30,11 @@ const (
 // Now only login is implemented here
 func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 	fmt.Println(data)
-	fn_type := mintcommon.BytesToUint16(data[0:15])
-	_ : mintcommon.BytesToUint16(data[16:31])
+	proto_len := mintcommon.BytesToUint16(data[0:15])
+	fn_type := mintcommon.BytesToUint16(data[16:31])
+
+	fmt.Println(fn_type, proto_len)
+
 	rl := &ReqLogin{}
 	rr := &ReqRegister{}
 
@@ -60,7 +63,7 @@ func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 			return err2
 		}
 	case SIGNUP:
-		if err := proto.Unmarshal(data[16:cnt], rr); err != nil {
+		if err := proto.Unmarshal(data[32:cnt], rr); err != nil {
 			return err
 		}
 		au = rr.GetPlayerInfo()
