@@ -4,48 +4,44 @@ package protocol;
 
 // Handshake with the server
 message Handshake{
-	string token = 1;
+   string token = 1;
 }
 
 // store basic information of players
 message PlayerInfo{
-	uint32 id = 1;
-	string account = 2; 	// 0 < length < 25, only Alphanumeric  
-	string password = 3;	// 0 < length < 25, only Alphanumeric  
-	string name = 4;		// 0 < length < 25, only Alphanumeric  
+   string account = 2;    // 0 < length < 25, only Alphanumeric
+   string password = 3;   // 0 < length < 25, only Alphanumeric
 }
 
 // request login
 message ReqLogin{
-	string account = 1;
-	string password = 2;
+   string account = 1;
+   string password = 2;
 }
 
 // request register
 message ReqRegister{
-	PlayerInfo playerInfo = 1;
+   PlayerInfo playerInfo = 1;
 }
 
 enum ServerReturnCode {
-	OK               = 0;
-	DBFAIL           = 1;
-	ACC_PSW_NO_MATCH = 2;
-	ACC_INVALID      = 3;
-	PSW_INVALID      = 4;
-	NAME_INVALID	 = 5;
-	ACC_EXISTED      = 6;
-	UNKNOWN_FUNC	 = 99;
-} 
+   OK               = 0;
+   DBFAIL           = 1;	// 数据库错误，可以理解为服务器错误
+   ACC_PSW_NO_MATCH = 2;	// 账号密码不匹配
+   ACC_INVALID      = 3;	// 账号不合法(账号必须是字母数字,0<长度<25)
+   PSW_INVALID      = 4;	// 密码不合法(账号必须是字母数字,0<长度<25)
+   ACC_EXISTED      = 5;	// 账户已存在(注册时用)
+   UNKNOWN_FUNC    = 99;	// 没有define的功能
+}
 
 // server response after login
 message RetLogin{
-	ServerReturnCode code = 1;
-	uint32 id = 2;
-	string name = 3;	// server returns (name, id) pair for further contacts
+   ServerReturnCode code = 1;
+   uint32 id = 2;
 }
 
 // server response registration
 message RetRegister{
-	ServerReturnCode code = 1;
-	uint32 id = 2;		// server returns (id) for further contacts
+   ServerReturnCode code = 1;
 }
+

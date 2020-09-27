@@ -153,12 +153,6 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
 			return writeSignUpResponse(conn, au, ServerReturnCode_PSW_INVALID)
-		case ServerReturnCode_NAME_INVALID:
-			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
-			config.GlobalConfiguration.LogToConsole,
-			config.GlobalConfiguration.LogPath,
-				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, au, ServerReturnCode_NAME_INVALID)
 		case ServerReturnCode_ACC_EXISTED:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
@@ -187,7 +181,7 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 // writeSignInResponse is the internal implementation of serverResponse
 // it sends the proto message to client use net.TCPConn.Write
 func writeSignInResponse(conn *net.TCPConn, au *PlayerInfo, isError ServerReturnCode) error {
-	rsp := &RetLogin{Code: isError, Id: au.Id, Name: au.Name}
+	rsp := &RetLogin{Code: isError}
 	data, err := proto.Marshal(rsp)
 	if err != nil {
 		return err
@@ -203,7 +197,7 @@ func writeSignInResponse(conn *net.TCPConn, au *PlayerInfo, isError ServerReturn
 // writeSignUpResponse is the internal implementation of serverResponse
 // it sends the proto message to client use net.TCPConn.Write
 func writeSignUpResponse(conn *net.TCPConn, au *PlayerInfo, isError ServerReturnCode) error {
-	srvrsp := &RetRegister{Code: isError, Id: au.Id}
+	srvrsp := &RetRegister{Code: isError}
 	data, err := proto.Marshal(srvrsp)
 	if err != nil {
 		return err
