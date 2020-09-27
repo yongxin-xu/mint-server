@@ -57,6 +57,7 @@ func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 		}
 		au.Account = rl.GetAccount()
 		au.Password = rl.GetPassword()
+		fmt.Println(au.Account, au.Password)
 		result := signIn(au)
 		err2 := serverResponse(conn, au, SIGNIN, result);
 		if err2 != nil {
@@ -67,6 +68,7 @@ func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 			return err
 		}
 		au = rr.GetPlayerInfo()
+		fmt.Println(au.Account, au.Password)
 		result := signUp(au)
 		err2 := serverResponse(conn, au, SIGNUP, result);
 		if err2 != nil {
