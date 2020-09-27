@@ -10,7 +10,6 @@ import (
 )
 
 // Currently, we use short connection to DB
-// TODO, in the future, long connection to DB may be supported
 
 // signUpTry use a db connection to try signing up.
 // return vals:

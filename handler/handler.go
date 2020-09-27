@@ -173,7 +173,7 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 			"[info] Unknown function in ServerResponse")
-		return nil
+		return writeSignUpResponse(conn, au, ServerReturnCode_UNKNOWN_FUNC)
 	}
 	return nil
 }
