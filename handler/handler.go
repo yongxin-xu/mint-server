@@ -12,13 +12,14 @@ import (
 type functionType string
 
 const (
+	WELCOME functionType = "Welcome"
 	SIGNIN functionType = "SignIn"
 	SIGNUP functionType = "SignUp"
 	UNKNOWN functionType = "Unknown"
 )
 
 const (
-	SHAKEHAND = 0
+	HANDSHAKE = 0
 	REQUSET_SIGNIN = 1
 	REQUEST_SIGNUP = 2
 	RESPONSE_SIGNIN = 3
@@ -48,6 +49,8 @@ func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 	var fn functionType
 
 	switch fn_type {
+	case HANDSHAKE:
+		fn = WELCOME
 	case REQUSET_SIGNIN:
 		fn = SIGNIN
 	case REQUEST_SIGNUP:
@@ -58,6 +61,10 @@ func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 
 	au := &PlayerInfo{}
 	switch fn {
+	case WELCOME:
+		if err := writeShakehandResponse(conn); err != nil {
+			return err
+		}
 	case SIGNIN:
 		if err := proto.Unmarshal(data[5:cnt], rl); err != nil {
 			return err
@@ -174,7 +181,7 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 			"[info] Unknown function in ServerResponse")
-		return writeShakehandResponse(conn, ServerReturnCode_UNKNOWN_FUNC)
+		return nil
 	}
 	return nil
 }
@@ -213,13 +220,13 @@ func writeSignUpResponse(conn *net.TCPConn, isError ServerReturnCode) error {
 
 // writeShakehandResponse is the internal implementation of serverResponse
 // it sends the proto message to client use net.TCPConn.Write
-func writeShakehandResponse(conn *net.TCPConn, isError ServerReturnCode) error {
-	srvrsp := &RetRegister{Code: isError}
+func writeShakehandResponse(conn *net.TCPConn) error {
+	srvrsp := &Handshake{Token: "Welcome"}
 	data, err := proto.Marshal(srvrsp)
 	if err != nil {
 		return err
 	}
-	resp_type := mintcommon.Uint16ToBytes(SHAKEHAND)
+	resp_type := mintcommon.Uint16ToBytes(HANDSHAKE)
 	buf_len := mintcommon.Uint16ToBytes(uint16(len(data)))
 	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, data)); err != nil {
 		return err
