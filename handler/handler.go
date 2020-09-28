@@ -166,7 +166,7 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, ServerReturnCode_PSW_INVALID)
+			return writeSignUpResponse(conn, ServerReturnCode_ACC_EXISTED)
 		case ServerReturnCode_DBFAIL:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
