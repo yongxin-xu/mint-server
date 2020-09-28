@@ -18,6 +18,7 @@ const (
 )
 
 const (
+	SHAKEHAND = 0
 	REQUSET_SIGNIN = 1
 	REQUEST_SIGNUP = 2
 	RESPONSE_SIGNIN = 3
@@ -105,31 +106,31 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in succeeded, account: %s", au.Account))
-			return writeSignInResponse(conn, au, ServerReturnCode_OK)
+			return writeSignInResponse(conn, ServerReturnCode_OK)
 		case ServerReturnCode_ACC_PSW_NO_MATCH:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, au, ServerReturnCode_ACC_PSW_NO_MATCH)
+			return writeSignInResponse(conn, ServerReturnCode_ACC_PSW_NO_MATCH)
 		case ServerReturnCode_ACC_INVALID:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, au, ServerReturnCode_ACC_INVALID)
+			return writeSignInResponse(conn, ServerReturnCode_ACC_INVALID)
 		case ServerReturnCode_PSW_INVALID:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, au, ServerReturnCode_PSW_INVALID)
+			return writeSignInResponse(conn, ServerReturnCode_PSW_INVALID)
 		case ServerReturnCode_DBFAIL:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, au, ServerReturnCode_DBFAIL)
+			return writeSignInResponse(conn, ServerReturnCode_DBFAIL)
 		default:
 			break
 		}
@@ -140,31 +141,31 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up succeeded, account: %s", au.Account))
-			return writeSignUpResponse(conn, au, ServerReturnCode_OK)
+			return writeSignUpResponse(conn, ServerReturnCode_OK)
 		case ServerReturnCode_ACC_INVALID:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, au, ServerReturnCode_ACC_INVALID)
+			return writeSignUpResponse(conn, ServerReturnCode_ACC_INVALID)
 		case ServerReturnCode_PSW_INVALID:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, au, ServerReturnCode_PSW_INVALID)
+			return writeSignUpResponse(conn, ServerReturnCode_PSW_INVALID)
 		case ServerReturnCode_ACC_EXISTED:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, au, ServerReturnCode_PSW_INVALID)
+			return writeSignUpResponse(conn, ServerReturnCode_PSW_INVALID)
 		case ServerReturnCode_DBFAIL:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, au, ServerReturnCode_DBFAIL)
+			return writeSignUpResponse(conn, ServerReturnCode_DBFAIL)
 		default:
 			break
 		}
@@ -173,14 +174,14 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 			"[info] Unknown function in ServerResponse")
-		return writeSignUpResponse(conn, au, ServerReturnCode_UNKNOWN_FUNC)
+		return writeShakehandResponse(conn, ServerReturnCode_UNKNOWN_FUNC)
 	}
 	return nil
 }
 
 // writeSignInResponse is the internal implementation of serverResponse
 // it sends the proto message to client use net.TCPConn.Write
-func writeSignInResponse(conn *net.TCPConn, au *PlayerInfo, isError ServerReturnCode) error {
+func writeSignInResponse(conn *net.TCPConn, isError ServerReturnCode) error {
 	rsp := &RetLogin{Code: isError}
 	data, err := proto.Marshal(rsp)
 	if err != nil {
@@ -188,7 +189,7 @@ func writeSignInResponse(conn *net.TCPConn, au *PlayerInfo, isError ServerReturn
 	}
 	resp_type := mintcommon.Uint16ToBytes(RESPONSE_SIGNIN)
 	buf_len := mintcommon.Uint16ToBytes(uint16(len(data)))
-	if _, err := conn.Write(mintcommon.BytesConcatenate(resp_type, buf_len, data)); err != nil {
+	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, data)); err != nil {
 		return err
 	}
 	return nil
@@ -196,7 +197,7 @@ func writeSignInResponse(conn *net.TCPConn, au *PlayerInfo, isError ServerReturn
 
 // writeSignUpResponse is the internal implementation of serverResponse
 // it sends the proto message to client use net.TCPConn.Write
-func writeSignUpResponse(conn *net.TCPConn, au *PlayerInfo, isError ServerReturnCode) error {
+func writeSignUpResponse(conn *net.TCPConn, isError ServerReturnCode) error {
 	srvrsp := &RetRegister{Code: isError}
 	data, err := proto.Marshal(srvrsp)
 	if err != nil {
@@ -204,7 +205,23 @@ func writeSignUpResponse(conn *net.TCPConn, au *PlayerInfo, isError ServerReturn
 	}
 	resp_type := mintcommon.Uint16ToBytes(RESPONSE_SIGNUP)
 	buf_len := mintcommon.Uint16ToBytes(uint16(len(data)))
-	if _, err := conn.Write(mintcommon.BytesConcatenate(resp_type, buf_len, data)); err != nil {
+	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, data)); err != nil {
+		return err
+	}
+	return nil
+}
+
+// writeShakehandResponse is the internal implementation of serverResponse
+// it sends the proto message to client use net.TCPConn.Write
+func writeShakehandResponse(conn *net.TCPConn, isError ServerReturnCode) error {
+	srvrsp := &RetRegister{Code: isError}
+	data, err := proto.Marshal(srvrsp)
+	if err != nil {
+		return err
+	}
+	resp_type := mintcommon.Uint16ToBytes(SHAKEHAND)
+	buf_len := mintcommon.Uint16ToBytes(uint16(len(data)))
+	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, data)); err != nil {
 		return err
 	}
 	return nil
