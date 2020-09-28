@@ -195,8 +195,9 @@ func writeSignInResponse(conn *net.TCPConn, isError ServerReturnCode) error {
 		return err
 	}
 	resp_type := mintcommon.Uint16ToBytes(RESPONSE_SIGNIN)
-	buf_len := mintcommon.Uint16ToBytes(uint16(len(data)))
-	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, data)); err != nil {
+	suflen := mintcommon.Uint8ToBytes(uint8(len(data)))
+	buf_len := mintcommon.Uint16ToBytes(uint16(len(data) + 1))
+	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)); err != nil {
 		return err
 	}
 	return nil
@@ -211,8 +212,9 @@ func writeSignUpResponse(conn *net.TCPConn, isError ServerReturnCode) error {
 		return err
 	}
 	resp_type := mintcommon.Uint16ToBytes(RESPONSE_SIGNUP)
-	buf_len := mintcommon.Uint16ToBytes(uint16(len(data)))
-	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, data)); err != nil {
+	suflen := mintcommon.Uint8ToBytes(uint8(len(data)))
+	buf_len := mintcommon.Uint16ToBytes(uint16(len(data) + 1))
+	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)); err != nil {
 		return err
 	}
 	return nil
@@ -227,8 +229,9 @@ func writeShakehandResponse(conn *net.TCPConn) error {
 		return err
 	}
 	resp_type := mintcommon.Uint16ToBytes(HANDSHAKE)
-	buf_len := mintcommon.Uint16ToBytes(uint16(len(data)))
-	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, data)); err != nil {
+	suflen := mintcommon.Uint8ToBytes(uint8(len(data)))
+	buf_len := mintcommon.Uint16ToBytes(uint16(len(data) + 1))
+	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)); err != nil {
 		return err
 	}
 	return nil
