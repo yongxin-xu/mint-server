@@ -40,6 +40,7 @@ func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 	}
 	proto_len := mintcommon.BytesToUint16(data[0:2])
 	fn_type := mintcommon.BytesToUint16(data[2:4])
+	suflen := mintcommon.BytesToUint8(data[4:5])
 
 	fmt.Println(fn_type, proto_len)
 
@@ -66,7 +67,7 @@ func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 			return err
 		}
 	case SIGNIN:
-		if err := proto.Unmarshal(data[5:cnt], rl); err != nil {
+		if err := proto.Unmarshal(data[5:5+suflen], rl); err != nil {
 			return err
 		}
 		au.Account = rl.GetAccount()
@@ -78,7 +79,7 @@ func MainHandler(conn *net.TCPConn, data []byte, cnt int) error {
 			return err2
 		}
 	case SIGNUP:
-		if err := proto.Unmarshal(data[5:cnt], rr); err != nil {
+		if err := proto.Unmarshal(data[5:5+suflen], rr); err != nil {
 			return err
 		}
 		au = rr.GetPlayerInfo()
