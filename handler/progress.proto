@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package protocol;
+
+// client-server progress handle
+// client request progress
+message ReqProgress {
+   int32 chapter = 1;
+   int32 section = 2;
+}
+
+// server response progress
+message RetProgress {
+   int32 chapter = 1;
+   int32 section = 2;
+}

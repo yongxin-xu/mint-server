@@ -11,6 +11,7 @@ import (
 type Connector struct {
 	Conn        *net.TCPConn               // TCP connection
 	ConnID      uint32                     // Connect ID
+	UserID      int						   // User ID
 	isClosed    bool                       // Whether the connection is closed
 	funcHanlder mintinterfaces.MintHandler // function handler
 	ExitChan    chan bool                  // chan has exited
@@ -18,8 +19,8 @@ type Connector struct {
 
 // NewConnector receives a TCP connection and its callback function
 // and returns a new connector
-func NewConnector(conn *net.TCPConn, connID uint32, callback mintinterfaces.MintHandler) *Connector {
-	c := &Connector{Conn: conn, ConnID: connID, funcHanlder: callback,
+func NewConnector(conn *net.TCPConn, connID uint32, userid int, callback mintinterfaces.MintHandler) *Connector {
+	c := &Connector{Conn: conn, ConnID: connID, UserID: userid, funcHanlder: callback,
 		isClosed: false, ExitChan: make(chan bool, 1)}
 	return c
 }
@@ -40,9 +41,11 @@ func (c *Connector) Start() {
 				break
 			}
 			/* call handler */
-			if err := c.funcHanlder(c.Conn, buf, cnt); err != nil {
+			if err := c.funcHanlder(c.Conn, &c.UserID, buf, cnt); err != nil {
 				mintcommon.DebugPrint(true, true, "",
-					fmt.Sprintf("[Error] handler error: %s", err))
+					fmt.Sprintf("[error] handler error: %s", err))
+			}
+			if c.isClosed {
 				break
 			}
 		}
@@ -84,6 +87,5 @@ func (c *Connector) GetClientAddr() net.Addr {
 
 // Send data to client
 func (c *Connector) Send(data []byte, cnt int) error {
-	// TODO: Implement Send Data
 	return nil
 }
