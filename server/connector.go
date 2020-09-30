@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	mintcommon "mintserver/common"
+	"mintserver/config"
 	mintinterfaces "mintserver/interface"
 	"net"
 )
@@ -35,7 +36,7 @@ func (c *Connector) Start() {
 		defer c.Stop()
 
 		for {
-			buf := make([]byte, 1024)
+			buf := make([]byte, config.GlobalConfiguration.MaxPackageSize)
 			cnt, err := c.Conn.Read(buf)
 			if err != nil {
 				break
