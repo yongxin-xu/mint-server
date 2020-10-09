@@ -108,6 +108,10 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 				return err2
 			}
 		case GETPROGRESS:
+			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
+				fmt.Sprintf("[info] user get progress, uid %d", *CID))
 			rp, err := getProgress(*CID)
 			if err != nil && rp == nil {
 				rp = &RetProgress{Chapter: -1, Section: -1}
