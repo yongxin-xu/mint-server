@@ -102,7 +102,8 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				rr.String())
-			result := signUp(au)
+			result, __id := signUp(au)
+			*CID = __id
 			err2 := serverResponse(conn, au, SIGNUP, result);
 			if err2 != nil {
 				return err2

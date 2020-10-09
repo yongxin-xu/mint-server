@@ -47,28 +47,30 @@ func signIn(_au *PlayerInfo) (int, ServerReturnCode) {
 // 3. Register the user, and fetch user id
 // 4. Return Result
 // Results of SignUp:
+// 1. Return Code
 // 		a. Account not valid (ACC_INVALID)
 //		b. Account already existed (ACC_EXISTED)
 //		c. Password not valid (PSW_INVALID)
 //		d. Name not valid (NAME_INVALID)
 //		e. OK
 //		f. DBFAIL
-func signUp(_au *PlayerInfo) (ServerReturnCode) {
+// 2. UserID
+func signUp(_au *PlayerInfo) (ServerReturnCode, int) {
 	defer func(){_au.Password = ""}() // mask password when finished
 	if len(_au.Account) == 0 || len(_au.Account) > 25 || !isAlphaNum(_au.Account) {
-		return ServerReturnCode_ACC_INVALID
+		return ServerReturnCode_ACC_INVALID, 0
 	}
 	if len(_au.Password) == 0 || len(_au.Password) > 25 || !isAlphaNum(_au.Password) {
-		return ServerReturnCode_PSW_INVALID
+		return ServerReturnCode_PSW_INVALID, 0
 	}
-	result, err := signUpTry(_au.Account, _au.Password)
+	result, _id, err := signUpTry(_au.Account, _au.Password)
 	if err != nil {
 		mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 			fmt.Sprintf("[info] Database failed %s", err))
 	}
-	return result
+	return result, _id
 }
 
 func isAlphaNum(str string) bool {
