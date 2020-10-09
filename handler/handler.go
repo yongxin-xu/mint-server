@@ -16,7 +16,8 @@ const (
 	SIGNIN functionType = "SignIn"
 	SIGNUP functionType = "SignUp"
 	UNKNOWN functionType = "Unknown"
-	PROGRESS functionType = "Progress"
+	SETPROGRESS functionType = "SetProgress"
+	GETPROGRESS functionType = "GetProgress"
 )
 
 const (
@@ -25,8 +26,9 @@ const (
 	REQUEST_SIGNUP = 2
 	RESPONSE_SIGNIN = 3
 	RESPONSE_SIGNUP = 4
-	REQUEST_PROGRESS = 5
+	REQUEST_SET_PROGR = 5
 	RESPONSE_PROGRESS = 6
+	REQUEST_GET_PROGR = 7
 )
 
 // MainHanlder handles functions
@@ -62,8 +64,10 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 			fn = SIGNIN
 		case REQUEST_SIGNUP:
 			fn = SIGNUP
-		case REQUEST_PROGRESS:
-			fn = PROGRESS
+		case REQUEST_SET_PROGR:
+			fn = SETPROGRESS
+		case REQUEST_GET_PROGR:
+			fn = GETPROGRESS
 		default:
 			fn = UNKNOWN
 		}
@@ -84,13 +88,10 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				rl.String())
-			__id, rp, result := signIn(au)
+			__id, result := signIn(au)
 			*CID = __id
 			if err2 := serverResponse(conn, au, SIGNIN, result); err2 != nil {
 				return err2
-			}
-			if err3 := writeProgressResponse(conn, *CID, rp, false); err3 != nil {
-				return err3
 			}
 		case SIGNUP:
 			if err := proto.Unmarshal(data[5:5+suflen], rr); err != nil {
@@ -106,7 +107,15 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 			if err2 != nil {
 				return err2
 			}
-		case PROGRESS:
+		case GETPROGRESS:
+			rp, err := getProgress(*CID)
+			if err != nil && rp == nil {
+				rp = &RetProgress{Chapter: -1, Section: -1}
+			}
+			if err3 := writeProgressResponse(conn, *CID, rp, false); err3 != nil {
+				return err3
+			}
+		case SETPROGRESS:
 			rp := &ReqProgress{}
 			if err := proto.Unmarshal(data[5:5+suflen], rp); err != nil {
 				return err

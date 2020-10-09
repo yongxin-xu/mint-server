@@ -58,7 +58,7 @@ func signUpTry(account string, password string) (ServerReturnCode, error) {
 //		2. user id
 //		3. current user progress (chapter, section)
 //		4. error
-func signInTry(account string, password string) (ServerReturnCode, int, *RetProgress, error) {
+func signInTry(account string, password string) (ServerReturnCode, int, error) {
 	var select_sql string
 
 	select_sql = fmt.Sprintf("SELECT _id, _chapter, _section FROM muser WHERE _account = '%s' and _password = '%s'",
@@ -66,16 +66,16 @@ func signInTry(account string, password string) (ServerReturnCode, int, *RetProg
 
 	dbconn, err := getDBConn()
 	if err != nil {
-		return ServerReturnCode_DBFAIL, 0, nil, err
+		return ServerReturnCode_DBFAIL, 0, err
 	}
 	// 1. set transaction level
 	if _, err := dbconn.Query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ"); err != nil {
-		return ServerReturnCode_DBFAIL, 0, nil, err
+		return ServerReturnCode_DBFAIL, 0, err
 	}
 
 	// 2. begin transaction
 	if _, err := dbconn.Query("BEGIN"); err != nil {
-		return ServerReturnCode_DBFAIL, 0, nil, err
+		return ServerReturnCode_DBFAIL, 0, err
 	}
 
 	// 3. select ... => get id
@@ -84,14 +84,14 @@ func signInTry(account string, password string) (ServerReturnCode, int, *RetProg
 	var _charpter int;
 	var _section int;
 	if err != nil {
-		return ServerReturnCode_DBFAIL, 0, nil, err
+		return ServerReturnCode_DBFAIL, 0, err
 	}
 	count := 0
 	rp := &RetProgress{}
 	for rets.Next() {
 		err = rets.Scan(&_id, &_charpter, &_section)
 		if err != nil {
-			return ServerReturnCode_DBFAIL, 0, nil, err
+			return ServerReturnCode_DBFAIL, 0, err
 		}
 		rp.Chapter = int32(_charpter)
 		rp.Section = int32(_section)
@@ -99,14 +99,14 @@ func signInTry(account string, password string) (ServerReturnCode, int, *RetProg
 		break
 	}
 	if count == 0 {
-		return ServerReturnCode_ACC_PSW_NO_MATCH, 0, nil, err
+		return ServerReturnCode_ACC_PSW_NO_MATCH, 0, err
 	}
 
 	// 4. commit()
 	if _, err := dbconn.Query("COMMIT"); err != nil {
-		return ServerReturnCode_DBFAIL, 0, nil, err
+		return ServerReturnCode_DBFAIL, 0, err
 	}
-	return ServerReturnCode_OK, _id, rp, nil
+	return ServerReturnCode_OK, _id, nil
 }
 
 // Set user progress
@@ -148,12 +148,53 @@ func setProgress(_id int, progress *ReqProgress) (*RetProgress, error) {
 }
 
 // Get user progress
-// Currently, we return client's progress when he/she signing in
-// TODO: if client wants to actively request for progress, implement this function
-func getProgress(account string) (error, *RetProgress) {
-	rspp := &RetProgress{}
+func getProgress(_id int) (*RetProgress, error) {
+	rp := &RetProgress{Chapter: -1, Section: -1}
+	select_sql := fmt.Sprintf("SELECT _id, _chapter, _section FROM muser WHERE _id = '%d'",
+		_id)
 
-	return nil, rspp
+	dbconn, err := getDBConn()
+	if err != nil {
+		return rp, err
+	}
+	// 1. set transaction level
+	if _, err := dbconn.Query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ"); err != nil {
+		return rp, err
+	}
+
+	// 2. begin transaction
+	if _, err := dbconn.Query("BEGIN"); err != nil {
+		return rp, err
+	}
+
+	// 3. select ... => get id
+	rets, err := dbconn.Query(select_sql)
+	var _cid int;
+	var _charpter int;
+	var _section int;
+	if err != nil {
+		return rp, err
+	}
+	count := 0
+	for rets.Next() {
+		err = rets.Scan(&_cid, &_charpter, &_section)
+		if err != nil {
+			return rp, err
+		}
+		rp.Chapter = int32(_charpter)
+		rp.Section = int32(_section)
+		count++
+		break
+	}
+	if count == 0 {
+		return rp, err
+	}
+
+	// 4. commit()
+	if _, err := dbconn.Query("COMMIT"); err != nil {
+		return rp, err
+	}
+	return rp, nil
 }
 
 func getDBConn() (*sql.DB, error) {

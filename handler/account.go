@@ -23,22 +23,22 @@ func NewUser(_account string, _name string, _psw string) *PlayerInfo {
 //		a. Account and Password not matched, or may not exist. (ACC_PSW_NO_MATCH)
 //		b. OK
 //		c. DBFAIL
-func signIn(_au *PlayerInfo) (int, *RetProgress, ServerReturnCode) {
+func signIn(_au *PlayerInfo) (int, ServerReturnCode) {
 	defer func(){_au.Password = ""}() // mask password when finished
 	if len(_au.Account) == 0 || len(_au.Account) > 25 || !isAlphaNum(_au.Account) {
-		return 0, nil, ServerReturnCode_ACC_INVALID
+		return 0, ServerReturnCode_ACC_INVALID
 	}
 	if len(_au.Password) == 0 || len(_au.Password) > 25 || !isAlphaNum(_au.Password) {
-		return 0, nil, ServerReturnCode_PSW_INVALID
+		return 0, ServerReturnCode_PSW_INVALID
 	}
-	result, id, rp, err := signInTry(_au.Account, _au.Password)
+	result, id, err := signInTry(_au.Account, _au.Password)
 	if err != nil {
 		mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 			fmt.Sprintf("[info] Database failed %s", err))
 	}
-	return id, rp, result
+	return id, result
 }
 
 // signUp an account
