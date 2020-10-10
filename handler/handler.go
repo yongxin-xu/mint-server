@@ -22,7 +22,7 @@ const (
 
 const (
 	HANDSHAKE = 0
-	REQUSET_SIGNIN = 1
+	REQUEST_SIGNIN = 1
 	REQUEST_SIGNUP = 2
 	RESPONSE_SIGNIN = 3
 	RESPONSE_SIGNUP = 4
@@ -60,7 +60,7 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 		switch fn_type {
 		case HANDSHAKE:
 			fn = WELCOME
-		case REQUSET_SIGNIN:
+		case REQUEST_SIGNIN:
 			fn = SIGNIN
 		case REQUEST_SIGNUP:
 			fn = SIGNUP
@@ -88,7 +88,7 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				rl.String())
-			__id, result := signIn(au)
+			result, __id := signIn(au)
 			*CID = __id
 			if err2 := serverResponse(conn, au, SIGNIN, result); err2 != nil {
 				return err2
@@ -176,12 +176,36 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
 			return writeSignInResponse(conn, ServerReturnCode_ACC_INVALID)
+		case ServerReturnCode_ACC_TOO_SHORT:
+			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
+				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
+			return writeSignInResponse(conn, ServerReturnCode_ACC_TOO_SHORT)
+		case ServerReturnCode_ACC_TOO_LONG:
+			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
+				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
+			return writeSignInResponse(conn, ServerReturnCode_ACC_TOO_LONG)
 		case ServerReturnCode_PSW_INVALID:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
 			return writeSignInResponse(conn, ServerReturnCode_PSW_INVALID)
+		case ServerReturnCode_PSW_TOO_SHORT:
+			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
+				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
+			return writeSignInResponse(conn, ServerReturnCode_PSW_TOO_SHORT)
+		case ServerReturnCode_PSW_TOO_LONG:
+			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
+				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
+			return writeSignInResponse(conn, ServerReturnCode_PSW_TOO_LONG)
 		case ServerReturnCode_DBFAIL:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
@@ -205,12 +229,36 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
 			return writeSignUpResponse(conn, ServerReturnCode_ACC_INVALID)
+		case ServerReturnCode_ACC_TOO_SHORT:
+			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
+				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
+			return writeSignUpResponse(conn, ServerReturnCode_ACC_TOO_SHORT)
+		case ServerReturnCode_ACC_TOO_LONG:
+			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
+				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
+			return writeSignUpResponse(conn, ServerReturnCode_ACC_TOO_LONG)
 		case ServerReturnCode_PSW_INVALID:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,
 			config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
 			return writeSignUpResponse(conn, ServerReturnCode_PSW_INVALID)
+		case ServerReturnCode_PSW_TOO_SHORT:
+			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
+				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
+			return writeSignUpResponse(conn, ServerReturnCode_PSW_TOO_SHORT)
+		case ServerReturnCode_PSW_TOO_LONG:
+			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
+				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
+			return writeSignUpResponse(conn, ServerReturnCode_PSW_TOO_LONG)
 		case ServerReturnCode_ACC_EXISTED:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 			config.GlobalConfiguration.LogToConsole,

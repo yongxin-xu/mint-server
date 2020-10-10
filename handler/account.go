@@ -10,7 +10,7 @@ import (
 // NewUser return the pointer of a new player
 // The function is for user to call
 // This shall never be called by the server
-func NewUser(_account string, _name string, _psw string) *PlayerInfo {
+func NewUser(_account string, _psw string) *PlayerInfo {
 	au := &PlayerInfo{Account: _account, Password: _psw}
 	return au
 }
@@ -18,19 +18,31 @@ func NewUser(_account string, _name string, _psw string) *PlayerInfo {
 // signIn checks the (Account, Password) pair
 // Results of SignIn
 //  0. user_id only valid if OK
-//	1. progress of user only valid if OK
-//	2. ServerReturnCode
+//	1. ServerReturnCode
 //		a. Account and Password not matched, or may not exist. (ACC_PSW_NO_MATCH)
 //		b. OK
 //		c. DBFAIL
-func signIn(_au *PlayerInfo) (int, ServerReturnCode) {
+//	2. progress of user only valid if OK
+func signIn(_au *PlayerInfo) (ServerReturnCode, int) {
 	defer func(){_au.Password = ""}() // mask password when finished
-	if len(_au.Account) == 0 || len(_au.Account) > 25 || !isAlphaNum(_au.Account) {
-		return 0, ServerReturnCode_ACC_INVALID
+	// check account
+	if len(_au.Account) < 8 {
+		return ServerReturnCode_ACC_TOO_SHORT, 0
+	} else if len(_au.Account) > 25 {
+		return ServerReturnCode_ACC_TOO_LONG, 0
+	} else if !isAlphaNum(_au.Account) {
+		return ServerReturnCode_ACC_INVALID, 0
 	}
-	if len(_au.Password) == 0 || len(_au.Password) > 25 || !isAlphaNum(_au.Password) {
-		return 0, ServerReturnCode_PSW_INVALID
+
+	// check password
+	if len(_au.Password) < 8 {
+		return ServerReturnCode_PSW_TOO_SHORT, 0
+	} else if len(_au.Password) > 25 {
+		return ServerReturnCode_ACC_TOO_LONG, 0
+	} else if !isAlphaNum(_au.Password) {
+		return ServerReturnCode_PSW_INVALID, 0
 	}
+
 	result, id, err := signInTry(_au.Account, _au.Password)
 	if err != nil {
 		mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
@@ -38,7 +50,7 @@ func signIn(_au *PlayerInfo) (int, ServerReturnCode) {
 			config.GlobalConfiguration.LogPath,
 			fmt.Sprintf("[info] Database failed %s", err))
 	}
-	return id, result
+	return result, id
 }
 
 // signUp an account
@@ -57,12 +69,25 @@ func signIn(_au *PlayerInfo) (int, ServerReturnCode) {
 // 2. UserID
 func signUp(_au *PlayerInfo) (ServerReturnCode, int) {
 	defer func(){_au.Password = ""}() // mask password when finished
-	if len(_au.Account) == 0 || len(_au.Account) > 25 || !isAlphaNum(_au.Account) {
+
+	// check account
+	if len(_au.Account) < 8 {
+		return ServerReturnCode_ACC_TOO_SHORT, 0
+	} else if len(_au.Account) > 25 {
+		return ServerReturnCode_ACC_TOO_LONG, 0
+	} else if !isAlphaNum(_au.Account) {
 		return ServerReturnCode_ACC_INVALID, 0
 	}
-	if len(_au.Password) == 0 || len(_au.Password) > 25 || !isAlphaNum(_au.Password) {
+
+	// check password
+	if len(_au.Password) < 8 {
+		return ServerReturnCode_PSW_TOO_SHORT, 0
+	} else if len(_au.Password) > 25 {
+		return ServerReturnCode_ACC_TOO_LONG, 0
+	} else if !isAlphaNum(_au.Password) {
 		return ServerReturnCode_PSW_INVALID, 0
 	}
+
 	result, _id, err := signUpTry(_au.Account, _au.Password)
 	if err != nil {
 		mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,

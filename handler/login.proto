@@ -28,9 +28,13 @@ enum ServerReturnCode {
    OK               = 0;
    DBFAIL           = 1;	// 数据库错误，可以理解为服务器错误
    ACC_PSW_NO_MATCH = 2;	// 账号密码不匹配
-   ACC_INVALID      = 3;	// 账号不合法(账号必须是字母数字,0<长度<25)
-   PSW_INVALID      = 4;	// 密码不合法(账号必须是字母数字,0<长度<25)
-   ACC_EXISTED      = 5;	// 账户已存在(注册时用)
+   ACC_INVALID      = 3;    // 账号含有非字母数字的字符
+   ACC_TOO_SHORT    = 4;	// 账号长度太短, 需要 >= 8
+   ACC_TOO_LONG     = 5;    // 账号长度太长, 需要 < 25
+   PSW_INVALID      = 6;	// 密码含有非字母数字的字符
+   PSW_TOO_SHORT    = 7;    // 密码长度太短, 需要 >= 8
+   PSW_TOO_LONG     = 8;    // 密码长度太长, 需要 < 25
+   ACC_EXISTED      = 9;	// 账户已存在(注册时用)
    UNKNOWN_FUNC    = 99;	// 没有define的功能
 }
 
@@ -44,4 +48,3 @@ message RetLogin{
 message RetRegister{
    ServerReturnCode code = 1;
 }
-
