@@ -2,8 +2,8 @@ package protocol
 
 import (
 	"fmt"
-	mintcommon "mintserver/common"
-	"mintserver/config"
+	mintcommon "mint-server/common"
+	"mint-server/config"
 	"unicode"
 )
 

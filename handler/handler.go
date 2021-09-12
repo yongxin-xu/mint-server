@@ -2,8 +2,8 @@ package protocol
 
 import (
 	"fmt"
-	mintcommon "mintserver/common"
-	"mintserver/config"
+	mintcommon "mint-server/common"
+	"mint-server/config"
 	"net"
 
 	"github.com/golang/protobuf/proto"
@@ -12,20 +12,20 @@ import (
 type functionType string
 
 const (
-	WELCOME functionType = "Welcome"
-	SIGNIN functionType = "SignIn"
-	SIGNUP functionType = "SignUp"
-	UNKNOWN functionType = "Unknown"
+	WELCOME     functionType = "Welcome"
+	SIGNIN      functionType = "SignIn"
+	SIGNUP      functionType = "SignUp"
+	UNKNOWN     functionType = "Unknown"
 	SETPROGRESS functionType = "SetProgress"
 	GETPROGRESS functionType = "GetProgress"
 )
 
 const (
-	HANDSHAKE = 0
-	REQUEST_SIGNIN = 1
-	REQUEST_SIGNUP = 2
-	RESPONSE_SIGNIN = 3
-	RESPONSE_SIGNUP = 4
+	HANDSHAKE         = 0
+	REQUEST_SIGNIN    = 1
+	REQUEST_SIGNUP    = 2
+	RESPONSE_SIGNIN   = 3
+	RESPONSE_SIGNUP   = 4
 	REQUEST_SET_PROGR = 5
 	RESPONSE_PROGRESS = 6
 	REQUEST_GET_PROGR = 7
@@ -35,11 +35,11 @@ const (
 // For example, Login function is received, call LoginCheck
 // or Register function is received, call Register
 // Now only login is implemented here
-func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
+func MainHandler(conn *net.TCPConn, CID *int, msgChan chan []byte, data []byte, cnt int) error {
 	for cnt > 0 {
 		fmt.Println(data)
 		if len(data) <= 4 {
-			if err := serverResponse(conn, nil, UNKNOWN, ServerReturnCode_UNKNOWN_FUNC); err != nil {
+			if err := serverResponse(conn, msgChan, nil, UNKNOWN, ServerReturnCode_UNKNOWN_FUNC); err != nil {
 				return err
 			}
 			return nil
@@ -75,7 +75,7 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 		au := &PlayerInfo{}
 		switch fn {
 		case WELCOME:
-			if err := writeShakehandResponse(conn); err != nil {
+			if err := writeShakehandResponse(conn, msgChan); err != nil {
 				return err
 			}
 		case SIGNIN:
@@ -90,7 +90,7 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 				rl.String())
 			result, __id := signIn(au)
 			*CID = __id
-			if err2 := serverResponse(conn, au, SIGNIN, result); err2 != nil {
+			if err2 := serverResponse(conn, msgChan, au, SIGNIN, result); err2 != nil {
 				return err2
 			}
 		case SIGNUP:
@@ -104,7 +104,7 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 				rr.String())
 			result, __id := signUp(au)
 			*CID = __id
-			err2 := serverResponse(conn, au, SIGNUP, result);
+			err2 := serverResponse(conn, msgChan, au, SIGNUP, result)
 			if err2 != nil {
 				return err2
 			}
@@ -117,7 +117,7 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 			if err != nil && rp == nil {
 				rp = &RetProgress{Chapter: -1, Section: -1}
 			}
-			if err3 := writeProgressResponse(conn, *CID, rp, false); err3 != nil {
+			if err3 := writeProgressResponse(conn, msgChan, *CID, rp, false); err3 != nil {
 				return err3
 			}
 		case SETPROGRESS:
@@ -133,15 +133,15 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 			if err != nil {
 				return err
 			}
-			if err2 := writeProgressResponse(conn, *CID, rspp, true); err2 != nil {
+			if err2 := writeProgressResponse(conn, msgChan, *CID, rspp, true); err2 != nil {
 				return err2
 			}
 		case UNKNOWN:
-			if err := serverResponse(conn, au, fn, ServerReturnCode_UNKNOWN_FUNC); err != nil {
+			if err := serverResponse(conn, msgChan, au, fn, ServerReturnCode_UNKNOWN_FUNC); err != nil {
 				return err
 			}
 		default:
-			if err := serverResponse(conn, au, fn, ServerReturnCode_UNKNOWN_FUNC); err != nil {
+			if err := serverResponse(conn, msgChan, au, fn, ServerReturnCode_UNKNOWN_FUNC); err != nil {
 				return err
 			}
 		}
@@ -154,7 +154,7 @@ func MainHandler(conn *net.TCPConn, CID *int, data []byte, cnt int) error {
 // The message includes
 // 1. Whether the operation failed or not
 // 2. Some additional information
-func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result ServerReturnCode) error {
+func serverResponse(conn *net.TCPConn, msgChan chan []byte, au *PlayerInfo, ft functionType, result ServerReturnCode) error {
 	switch ft {
 	case SIGNIN:
 		switch result {
@@ -163,55 +163,55 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in succeeded, account: %s", au.Account))
-			return writeSignInResponse(conn, ServerReturnCode_OK)
+			return writeSignInResponse(conn, msgChan, ServerReturnCode_OK)
 		case ServerReturnCode_ACC_PSW_NO_MATCH:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
-			config.GlobalConfiguration.LogToConsole,
-			config.GlobalConfiguration.LogPath,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, ServerReturnCode_ACC_PSW_NO_MATCH)
+			return writeSignInResponse(conn, msgChan, ServerReturnCode_ACC_PSW_NO_MATCH)
 		case ServerReturnCode_ACC_INVALID:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
-			config.GlobalConfiguration.LogToConsole,
-			config.GlobalConfiguration.LogPath,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, ServerReturnCode_ACC_INVALID)
+			return writeSignInResponse(conn, msgChan, ServerReturnCode_ACC_INVALID)
 		case ServerReturnCode_ACC_TOO_SHORT:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, ServerReturnCode_ACC_TOO_SHORT)
+			return writeSignInResponse(conn, msgChan, ServerReturnCode_ACC_TOO_SHORT)
 		case ServerReturnCode_ACC_TOO_LONG:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, ServerReturnCode_ACC_TOO_LONG)
+			return writeSignInResponse(conn, msgChan, ServerReturnCode_ACC_TOO_LONG)
 		case ServerReturnCode_PSW_INVALID:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
-			config.GlobalConfiguration.LogToConsole,
-			config.GlobalConfiguration.LogPath,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, ServerReturnCode_PSW_INVALID)
+			return writeSignInResponse(conn, msgChan, ServerReturnCode_PSW_INVALID)
 		case ServerReturnCode_PSW_TOO_SHORT:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, ServerReturnCode_PSW_TOO_SHORT)
+			return writeSignInResponse(conn, msgChan, ServerReturnCode_PSW_TOO_SHORT)
 		case ServerReturnCode_PSW_TOO_LONG:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, ServerReturnCode_PSW_TOO_LONG)
+			return writeSignInResponse(conn, msgChan, ServerReturnCode_PSW_TOO_LONG)
 		case ServerReturnCode_DBFAIL:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
-			config.GlobalConfiguration.LogToConsole,
-			config.GlobalConfiguration.LogPath,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignInResponse(conn, ServerReturnCode_DBFAIL)
+			return writeSignInResponse(conn, msgChan, ServerReturnCode_DBFAIL)
 		default:
 			break
 		}
@@ -219,58 +219,58 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 		switch result {
 		case ServerReturnCode_OK:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
-			config.GlobalConfiguration.LogToConsole,
-			config.GlobalConfiguration.LogPath,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up succeeded, account: %s", au.Account))
-			return writeSignUpResponse(conn, ServerReturnCode_OK)
+			return writeSignUpResponse(conn, msgChan, ServerReturnCode_OK)
 		case ServerReturnCode_ACC_INVALID:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
-			config.GlobalConfiguration.LogToConsole,
-			config.GlobalConfiguration.LogPath,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, ServerReturnCode_ACC_INVALID)
+			return writeSignUpResponse(conn, msgChan, ServerReturnCode_ACC_INVALID)
 		case ServerReturnCode_ACC_TOO_SHORT:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, ServerReturnCode_ACC_TOO_SHORT)
+			return writeSignUpResponse(conn, msgChan, ServerReturnCode_ACC_TOO_SHORT)
 		case ServerReturnCode_ACC_TOO_LONG:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, ServerReturnCode_ACC_TOO_LONG)
+			return writeSignUpResponse(conn, msgChan, ServerReturnCode_ACC_TOO_LONG)
 		case ServerReturnCode_PSW_INVALID:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
-			config.GlobalConfiguration.LogToConsole,
-			config.GlobalConfiguration.LogPath,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, ServerReturnCode_PSW_INVALID)
+			return writeSignUpResponse(conn, msgChan, ServerReturnCode_PSW_INVALID)
 		case ServerReturnCode_PSW_TOO_SHORT:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, ServerReturnCode_PSW_TOO_SHORT)
+			return writeSignUpResponse(conn, msgChan, ServerReturnCode_PSW_TOO_SHORT)
 		case ServerReturnCode_PSW_TOO_LONG:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign in failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, ServerReturnCode_PSW_TOO_LONG)
+			return writeSignUpResponse(conn, msgChan, ServerReturnCode_PSW_TOO_LONG)
 		case ServerReturnCode_ACC_EXISTED:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
-			config.GlobalConfiguration.LogToConsole,
-			config.GlobalConfiguration.LogPath,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, ServerReturnCode_ACC_EXISTED)
+			return writeSignUpResponse(conn, msgChan, ServerReturnCode_ACC_EXISTED)
 		case ServerReturnCode_DBFAIL:
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
-			config.GlobalConfiguration.LogToConsole,
-			config.GlobalConfiguration.LogPath,
+				config.GlobalConfiguration.LogToConsole,
+				config.GlobalConfiguration.LogPath,
 				fmt.Sprintf("[info] sign up failed, account: %s", au.Account))
-			return writeSignUpResponse(conn, ServerReturnCode_DBFAIL)
+			return writeSignUpResponse(conn, msgChan, ServerReturnCode_DBFAIL)
 		default:
 			break
 		}
@@ -286,7 +286,7 @@ func serverResponse(conn *net.TCPConn, au *PlayerInfo, ft functionType, result S
 
 // writeSignInResponse is the internal implementation of serverResponse
 // it sends the proto message to client use net.TCPConn.Write
-func writeSignInResponse(conn *net.TCPConn, isError ServerReturnCode) error {
+func writeSignInResponse(conn *net.TCPConn, msgChan chan []byte, isError ServerReturnCode) error {
 	rsp := &RetLogin{Code: isError}
 	data, err := proto.Marshal(rsp)
 	if err != nil {
@@ -295,15 +295,16 @@ func writeSignInResponse(conn *net.TCPConn, isError ServerReturnCode) error {
 	resp_type := mintcommon.Uint16ToBytes(RESPONSE_SIGNIN)
 	suflen := mintcommon.Uint8ToBytes(uint8(len(data)))
 	buf_len := mintcommon.Uint16ToBytes(uint16(len(data) + 1))
-	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)); err != nil {
-		return err
-	}
+	binMsg := mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)
+
+	msgChan <- binMsg
+
 	return nil
 }
 
 // writeSignUpResponse is the internal implementation of serverResponse
 // it sends the proto message to client use net.TCPConn.Write
-func writeSignUpResponse(conn *net.TCPConn, isError ServerReturnCode) error {
+func writeSignUpResponse(conn *net.TCPConn, msgChan chan []byte, isError ServerReturnCode) error {
 	srvrsp := &RetRegister{Code: isError}
 	data, err := proto.Marshal(srvrsp)
 	if err != nil {
@@ -312,16 +313,18 @@ func writeSignUpResponse(conn *net.TCPConn, isError ServerReturnCode) error {
 	resp_type := mintcommon.Uint16ToBytes(RESPONSE_SIGNUP)
 	suflen := mintcommon.Uint8ToBytes(uint8(len(data)))
 	buf_len := mintcommon.Uint16ToBytes(uint16(len(data) + 1))
-	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)); err != nil {
-		return err
-	}
+
+	binMsg := mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)
+
+	msgChan <- binMsg
+
 	return nil
 }
 
 // writeProgressResponse is the internal implementation of serverResponse
 // it sends the proto message to client use net.TCPConn.Write
-func writeProgressResponse(conn *net.TCPConn, id int, rsp *RetProgress, output bool) error {
-	if output == true {
+func writeProgressResponse(conn *net.TCPConn, msgChan chan []byte, id int, rsp *RetProgress, output bool) error {
+	if output {
 		if rsp.GetChapter() != -1 && rsp.GetSection() != -1 {
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 				config.GlobalConfiguration.LogToConsole,
@@ -332,7 +335,7 @@ func writeProgressResponse(conn *net.TCPConn, id int, rsp *RetProgress, output b
 			mintcommon.DebugPrint(config.GlobalConfiguration.EnableLog,
 				config.GlobalConfiguration.LogToConsole,
 				config.GlobalConfiguration.LogPath,
-				fmt.Sprintf("[error] set progress for, id: %d failed",
+				fmt.Sprintf("[error] set progress for, id: %d, %d, %d failed",
 					id, rsp.GetChapter(), rsp.GetSection()))
 		}
 	}
@@ -340,7 +343,7 @@ func writeProgressResponse(conn *net.TCPConn, id int, rsp *RetProgress, output b
 		config.GlobalConfiguration.LogToConsole,
 		config.GlobalConfiguration.LogPath,
 		fmt.Sprintf("[info] return progress to, id: %d, chapter: %d, section: %d",
-		id, rsp.GetChapter(), rsp.GetSection()))
+			id, rsp.GetChapter(), rsp.GetSection()))
 	data, err := proto.Marshal(rsp)
 	if err != nil {
 		return err
@@ -348,16 +351,17 @@ func writeProgressResponse(conn *net.TCPConn, id int, rsp *RetProgress, output b
 	resp_type := mintcommon.Uint16ToBytes(RESPONSE_PROGRESS)
 	suflen := mintcommon.Uint8ToBytes(uint8(len(data)))
 	buf_len := mintcommon.Uint16ToBytes(uint16(len(data) + 1))
-	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)); err != nil {
-		return err
-	}
+
+	binMsg := mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)
+
+	msgChan <- binMsg
+
 	return nil
 }
 
-
 // writeShakehandResponse is the internal implementation of serverResponse
 // it sends the proto message to client use net.TCPConn.Write
-func writeShakehandResponse(conn *net.TCPConn) error {
+func writeShakehandResponse(conn *net.TCPConn, msgChan chan []byte) error {
 	srvrsp := &Handshake{Token: "Welcome"}
 	data, err := proto.Marshal(srvrsp)
 	if err != nil {
@@ -366,9 +370,10 @@ func writeShakehandResponse(conn *net.TCPConn) error {
 	resp_type := mintcommon.Uint16ToBytes(HANDSHAKE)
 	suflen := mintcommon.Uint8ToBytes(uint8(len(data)))
 	buf_len := mintcommon.Uint16ToBytes(uint16(len(data) + 1))
-	if _, err := conn.Write(mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)); err != nil {
-		return err
-	}
+	binMsg := mintcommon.BytesConcatenate(buf_len, resp_type, suflen, data)
+
+	msgChan <- binMsg
+
 	return nil
 }
 

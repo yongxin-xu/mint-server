@@ -3,10 +3,10 @@ package protocol
 import (
 	"database/sql"
 	"fmt"
+	mintcommon "mint-server/common"
+	"mint-server/config"
+
 	"github.com/go-sql-driver/mysql"
-	_ "github.com/go-sql-driver/mysql"
-	mintcommon "mintserver/common"
-	"mintserver/config"
 )
 
 // Currently, we use short connection to DB
@@ -61,7 +61,6 @@ func signUpTry(account string, password string) (ServerReturnCode, int, error) {
 			return ServerReturnCode_DBFAIL, 0, err
 		}
 		count++
-		break
 	}
 	if count == 0 {
 		return ServerReturnCode_DBFAIL, 0, err
@@ -82,7 +81,7 @@ func signUpTry(account string, password string) (ServerReturnCode, int, error) {
 //		4. error
 func signInTry(account string, password string) (ServerReturnCode, int, error) {
 	select_sql := fmt.Sprintf("SELECT _id FROM muser WHERE _account = '%s' and _password = '%s'",
-			account, password)
+		account, password)
 
 	dbconn, err := getDBConn()
 	if err != nil {
@@ -100,7 +99,7 @@ func signInTry(account string, password string) (ServerReturnCode, int, error) {
 
 	// 3. select ... => get id
 	rets, err := dbconn.Query(select_sql)
-	var _id int;
+	var _id int
 	if err != nil {
 		return ServerReturnCode_DBFAIL, 0, err
 	}
@@ -111,7 +110,6 @@ func signInTry(account string, password string) (ServerReturnCode, int, error) {
 			return ServerReturnCode_DBFAIL, 0, err
 		}
 		count++
-		break
 	}
 	if count == 0 {
 		return ServerReturnCode_ACC_PSW_NO_MATCH, 0, err
@@ -184,9 +182,9 @@ func getProgress(_id int) (*RetProgress, error) {
 
 	// 3. select ... => get id
 	rets, err := dbconn.Query(select_sql)
-	var _cid int;
-	var _charpter int;
-	var _section int;
+	var _cid int
+	var _charpter int
+	var _section int
 	if err != nil {
 		return rp, err
 	}
@@ -199,7 +197,6 @@ func getProgress(_id int) (*RetProgress, error) {
 		rp.Chapter = int32(_charpter)
 		rp.Section = int32(_section)
 		count++
-		break
 	}
 	if count == 0 {
 		return rp, err

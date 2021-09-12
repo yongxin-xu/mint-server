@@ -2,10 +2,10 @@ package server
 
 import (
 	"fmt"
-	mintcommon "mintserver/common"
-	"mintserver/config"
-	"mintserver/handler"
-	mintinterfaces "mintserver/interface"
+	mintcommon "mint-server/common"
+	"mint-server/config"
+	protocol "mint-server/handler"
+	mintinterfaces "mint-server/interface"
 	"net"
 )
 

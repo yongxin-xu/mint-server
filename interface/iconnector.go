@@ -23,4 +23,4 @@ type ConnectorInterface interface {
 	Send(data []byte, cnt int) error
 }
 
-type MintHandler func(*net.TCPConn, *int, []byte, int) error
+type MintHandler func(*net.TCPConn, *int, chan []byte, []byte, int) error
